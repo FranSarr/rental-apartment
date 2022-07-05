@@ -2,10 +2,48 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { DayPicker } from 'react-day-picker'
 import 'react-day-picker/dist/style.css'
-import { isDaySelectable } from 'lib/dates'
+import { isDaySelectable, addDayToRange, getDatesBetweenDates, calcNumberOfNightsBetweenDates } from 'lib/dates'
+import { getCost } from 'lib/cost'
+import { useState } from 'react'
+
+
 
 
 export default function Calendar() {
+  const [from, setFrom] = useState()
+  const [to, setTo] = useState()
+
+  const handleDayClick = (day) => {
+    const range = addDayToRange(day, {
+      from,
+      to,
+    })
+    if (!range.to) {
+      if (!isDaySelectable(range.from)) {
+        alert('This date cannot be selected')
+        return
+      }
+      range.to = range.from
+    }
+    if (range.to && range.from) {
+      if (!isDaySelectable(range.to)) {
+        alert('The end date cannot be selected')
+        return
+      }
+    }
+    const daysInBetween = getDatesBetweenDates(range.from, range.to)
+
+  for (const dayInBetween of daysInBetween) {
+    if (!isDaySelectable(dayInBetween)) {
+      alert('Some days between those 2 dates cannot be selected')
+      return
+    }
+  }
+    setFrom(range.from)
+    setTo(range.to)
+	}
+
+
   return (
     <div>
       <Head>
@@ -50,19 +88,42 @@ export default function Calendar() {
 
           <div className='pt-6 flex justify-center availability-calendar'>
             <DayPicker
+            
             components={{
                 DayContent: (props) => (
                     <div className='relative text-right'>
+
                        <div
-                        className={        
-                            !isDaySelectable(props.date) && 'text-gray-500'
-                        }
+                        className={`relative text-right ${
+                          !isDaySelectable(props.date) && 'text-gray-500'
+                        }`}
                         >
-                        {props.date.getDate()}
+
+                      <div>
+	                      {props.date.getDate()}
+				              </div>
+				              {isDaySelectable(props.date) && (
+		                     <div className='-mt-2'>
+		                     <span
+		                   className={`bg-white text-black rounded-md font-bold px-1 text-xs`}
+		                     >
+		                    ${getCost(props.date)}
+		                   </span>
+		                  </div>
+
+		                  )}
+
                         </div>
+
                      </div>
                 ),
               }}
+
+            mode='range'
+            selected={[from, { from, to }]}
+            onDayClick={handleDayClick}
+              
+
                />
           </div>
 
